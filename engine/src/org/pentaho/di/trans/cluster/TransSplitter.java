@@ -102,10 +102,10 @@ public class TransSplitter {
   }
 
   private void clear() {
-    slaveTransMap = new Hashtable<SlaveServer, TransMeta>();
-    slaveStepPartitionFlag = new Hashtable<TransMeta, Map<StepMeta, String>>();
-    portCache = new Hashtable<String, Integer>();
-    carteObjectMap = new Hashtable<TransMeta, String>();
+    slaveTransMap = new Hashtable<>();
+    slaveStepPartitionFlag = new Hashtable<>();
+    portCache = new Hashtable<>();
+    carteObjectMap = new Hashtable<>();
 
     clusteredRunId = UUID.randomUUID().toString();
   }
@@ -176,7 +176,7 @@ public class TransSplitter {
   }
 
   private void checkClusterConfiguration() throws KettleException {
-    Map<String, ClusterSchema> map = new Hashtable<String, ClusterSchema>();
+    Map<String, ClusterSchema> map = new Hashtable<>();
     List<StepMeta> steps = originalTransformation.getSteps();
     for ( int i = 0; i < steps.size(); i++ ) {
       StepMeta step = steps.get( i );
@@ -367,7 +367,7 @@ public class TransSplitter {
     ClusterSchema clusterSchema, SlaveServer slaveServer ) {
     Map<StepMeta, String> stepPartitionFlag = slaveStepPartitionFlag.get( slave );
     if ( stepPartitionFlag == null ) {
-      stepPartitionFlag = new Hashtable<StepMeta, String>();
+      stepPartitionFlag = new Hashtable<>();
       slaveStepPartitionFlag.put( slave, stepPartitionFlag );
     }
     if ( stepPartitionFlag.get( stepMeta ) != null ) {
@@ -490,10 +490,10 @@ public class TransSplitter {
 
       for ( int r = 0; r < referenceSteps.length; r++ ) {
         StepMeta referenceStep = referenceSteps[r];
-
-        int nrPreviousSteps = originalTransformation.findNrPrevSteps( referenceStep );
+        List<StepMeta> prevSteps = originalTransformation.findPreviousSteps( referenceStep );
+        int nrPreviousSteps = prevSteps.size();
         for ( int p = 0; p < nrPreviousSteps; p++ ) {
-          StepMeta previousStep = originalTransformation.findPrevStep( referenceStep, p );
+          StepMeta previousStep = prevSteps.get( p );
 
           if ( !referenceStep.isClustered() ) {
             if ( !previousStep.isClustered() ) {
@@ -531,7 +531,7 @@ public class TransSplitter {
                 masterTransMeta.addStep( masterStep );
               }
 
-              Queue<Integer> masterStepCopyNumbers = new LinkedList<Integer>();
+              Queue<Integer> masterStepCopyNumbers = new LinkedList<>();
               for ( int i = 0; i < masterStep.getCopies(); i++ ) {
                 masterStepCopyNumbers.add( i );
               }
@@ -686,7 +686,7 @@ public class TransSplitter {
                 masterTransMeta.addStep( sourceStep );
               }
 
-              Queue<Integer> masterStepCopyNumbers = new LinkedList<Integer>();
+              Queue<Integer> masterStepCopyNumbers = new LinkedList<>();
               for ( int i = 0; i < sourceStep.getCopies(); i++ ) {
                 masterStepCopyNumbers.add( i );
               }
@@ -1497,7 +1497,7 @@ public class TransSplitter {
    * @throws KettleException
    */
   private void generateSlavePartitionSchemas() throws KettleException {
-    slaveServerPartitionsMap = new Hashtable<SlaveServer, Map<PartitionSchema, List<String>>>();
+    slaveServerPartitionsMap = new Hashtable<>();
 
     for ( int i = 0; i < referenceSteps.length; i++ ) {
       StepMeta stepMeta = referenceSteps[i];
@@ -1563,7 +1563,7 @@ public class TransSplitter {
         if ( schemaPartitionsMap == null ) {
           // Add the schema-partitions map to the the slave server
           //
-          schemaPartitionsMap = new HashMap<PartitionSchema, List<String>>();
+          schemaPartitionsMap = new HashMap<>();
           slaveServerPartitionsMap.put( slaveServer, schemaPartitionsMap );
         }
 
@@ -1571,7 +1571,7 @@ public class TransSplitter {
         //
         List<String> partitions = schemaPartitionsMap.get( partitionSchema );
         if ( partitions == null ) {
-          partitions = new ArrayList<String>();
+          partitions = new ArrayList<>();
           schemaPartitionsMap.put( partitionSchema, partitions );
         }
 

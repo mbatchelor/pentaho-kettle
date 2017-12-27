@@ -50,6 +50,7 @@ public class RowMetaTest {
 
   ValueMetaInterface charly;
   ValueMetaInterface dup;
+  ValueMetaInterface bin;
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
@@ -72,10 +73,11 @@ public class RowMetaTest {
     charly = ValueMetaFactory.createValueMeta( "charly", ValueMetaInterface.TYPE_SERIALIZABLE );
 
     dup = ValueMetaFactory.createValueMeta( "dup", ValueMetaInterface.TYPE_SERIALIZABLE );
+    bin = ValueMetaFactory.createValueMeta(  "bin", ValueMetaInterface.TYPE_BINARY );
   }
 
   private List<ValueMetaInterface> generateVList( String[] names, int[] types ) throws KettlePluginException {
-    List<ValueMetaInterface> list = new ArrayList<ValueMetaInterface>();
+    List<ValueMetaInterface> list = new ArrayList<>();
     for ( int i = 0; i < names.length; i++ ) {
       ValueMetaInterface vm = ValueMetaFactory.createValueMeta( names[i], types[i] );
       vm.setOrigin( "originStep" );
@@ -308,14 +310,46 @@ public class RowMetaTest {
     mapping.put( "a", 1 );
     List<Integer> needRealClone = new ArrayList<>();
     needRealClone.add( 2 );
-    RowMeta.RowMetaCache rowMetaCache = new RowMeta.RowMetaCache( mapping, needRealClone );
+    RowMeta.RowMetaCache rowMetaCache = new RowMeta.RowMetaCache( mapping );
     RowMeta.RowMetaCache rowMetaCache2 = new RowMeta.RowMetaCache( rowMetaCache );
     Assert.assertEquals( rowMetaCache.mapping, rowMetaCache2.mapping );
-    Assert.assertEquals( rowMetaCache.needRealClone, rowMetaCache2.needRealClone );
-    rowMetaCache = new RowMeta.RowMetaCache( mapping, null );
+    // Assert.assertEquals( rowMetaCache.needRealClone, rowMetaCache2.needRealClone );
+    rowMetaCache = new RowMeta.RowMetaCache( mapping );
     rowMetaCache2 = new RowMeta.RowMetaCache( rowMetaCache );
     Assert.assertEquals( rowMetaCache.mapping, rowMetaCache2.mapping );
-    Assert.assertNull( rowMetaCache2.needRealClone );
+    // Assert.assertNull( rowMetaCache2.needRealClone );
+  }
+
+  @Test
+  public void testNeedRealClone() {
+    RowMeta newRowMeta = new RowMeta();
+    newRowMeta.addValueMeta( string );
+    newRowMeta.addValueMeta( integer );
+    newRowMeta.addValueMeta( date );
+    newRowMeta.addValueMeta( charly );
+    newRowMeta.addValueMeta( dup );
+    newRowMeta.addValueMeta( bin );
+    List<Integer> list = newRowMeta.getOrCreateValuesThatNeedRealClone( newRowMeta.valueMetaList );
+    Assert.assertEquals( 3, list.size() ); // Should be charly, dup and bin
+    Assert.assertTrue( list.contains( 3 ) ); // charly
+    Assert.assertTrue( list.contains( 4 ) ); // dup
+    Assert.assertTrue( list.contains( 5 ) ); // bin
+    newRowMeta.addValueMeta( charly ); // should have nulled the newRowMeta.needRealClone
+    Assert.assertNull( newRowMeta.needRealClone ); // null because of the new add
+    list = newRowMeta.getOrCreateValuesThatNeedRealClone( newRowMeta.valueMetaList );
+    Assert.assertNotNull( newRowMeta.needRealClone );
+    Assert.assertEquals( 4, list.size() ); // Should still be charly, dup, bin, charly_1
+    newRowMeta.addValueMeta( bin ); // add new binary, should null out needRealClone again
+    Assert.assertNull( newRowMeta.needRealClone ); // null because of the new add
+    list = newRowMeta.getOrCreateValuesThatNeedRealClone( newRowMeta.valueMetaList );
+    Assert.assertNotNull( newRowMeta.needRealClone );
+    Assert.assertEquals( 5, list.size() ); // Should be charly, dup and bin, charly_1, bin_1
+
+    newRowMeta.addValueMeta( string ); // add new string, should null out needRealClone again
+    Assert.assertNull( newRowMeta.needRealClone ); // null because of the new add
+    list = newRowMeta.getOrCreateValuesThatNeedRealClone( newRowMeta.valueMetaList );
+    Assert.assertNotNull( newRowMeta.needRealClone );
+    Assert.assertEquals( 5, list.size() ); // Should still only be charly, dup and bin, charly_1, bin_1 - adding a string doesn't change of result
   }
 
   // @Test
@@ -357,7 +391,7 @@ public class RowMetaTest {
     rowMeta = new RowMeta();
 
     // create pre-existed rom meta list
-    List<ValueMetaInterface> pre = new ArrayList<ValueMetaInterface>( 100000 );
+    List<ValueMetaInterface> pre = new ArrayList<>( 100000 );
     for ( int i = 0; i < 100000; i++ ) {
       ValueMetaInterface vm =
         ValueMetaFactory.createValueMeta( UUID.randomUUID().toString(), ValueMetaInterface.TYPE_STRING );
@@ -369,7 +403,7 @@ public class RowMetaTest {
     long start, stop, time1, time2;
     start = System.nanoTime();
     // this is when filling regular array like in prev implementation
-    List<ValueMetaInterface> prev = new ArrayList<ValueMetaInterface>();
+    List<ValueMetaInterface> prev = new ArrayList<>();
     for ( ValueMetaInterface item : pre ) {
       prev.add( item );
     }
